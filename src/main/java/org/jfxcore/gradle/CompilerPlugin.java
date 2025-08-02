@@ -19,6 +19,7 @@ import org.jfxcore.gradle.compiler.CompilerService;
 import org.jfxcore.gradle.tasks.ProcessFxmlTask;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -77,6 +78,7 @@ public class CompilerPlugin implements Plugin<Project> {
         FileCollection srcDirs = project.files(sourceSet.getAllSource().getSrcDirs());
         File classesDir = sourceSet.getJava().getClassesDirectory().get().getAsFile();
         File genSrcDir = PathHelper.getGeneratedSourcesDir(project, sourceSet);
+        Map<File, List<File>> srcFiles = PathHelper.getFxmlFilesPerSourceDirectory(srcDirs.getFiles(), genSrcDir);
         UUID compilationId = UUID.randomUUID();
 
         Provider<ProcessFxmlTask> processFxmlTask = project.getTasks().register(
@@ -84,7 +86,14 @@ public class CompilerPlugin implements Plugin<Project> {
             ProcessFxmlTask.class, task -> {
                 task.getCompilationId().set(compilationId);
                 task.getSearchPath().set(searchPath);
-                task.getSourceDirs().set(srcDirs);
+                task.getFxmlFilesPerSourceDirectory().set(srcFiles.entrySet().stream()
+                    .map(entry -> {
+                        ProcessFxmlTask.FxmlFilesPerSourceDirectory res =
+                            project.getObjects().newInstance(ProcessFxmlTask.FxmlFilesPerSourceDirectory.class);
+                        res.getSourceDir().set(entry.getKey());
+                        res.getFxmlFiles().set(project.files(entry.getValue()));
+                        return res;
+                    }).toList());
                 task.getClassesDir().set(classesDir);
                 task.getGeneratedSourcesDir().set(genSrcDir);
                 jarTaskDependencies.forEach(task::dependsOn);
@@ -106,4 +115,5 @@ public class CompilerPlugin implements Plugin<Project> {
             }
         }
     }
+
 }
