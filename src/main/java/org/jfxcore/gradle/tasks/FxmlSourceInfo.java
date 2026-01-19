@@ -3,9 +3,8 @@
 
 package org.jfxcore.gradle.tasks;
 
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SkipWhenEmpty;
@@ -17,5 +16,5 @@ public abstract class FxmlSourceInfo {
 
     @InputFiles
     @SkipWhenEmpty
-    public abstract Property<FileCollection> getFxmlFiles();
+    public abstract ConfigurableFileCollection getFxmlFiles();
 }

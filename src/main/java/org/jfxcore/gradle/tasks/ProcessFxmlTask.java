@@ -5,6 +5,7 @@ package org.jfxcore.gradle.tasks;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.ListProperty;
@@ -33,10 +34,10 @@ public abstract class ProcessFxmlTask extends DefaultTask {
     public abstract Property<UUID> getCompilationId();
 
     @Internal
-    public abstract Property<FileCollection> getSearchPath();
+    public abstract ConfigurableFileCollection getSearchPath();
 
     @InputFiles
-    public abstract Property<FileCollection> getCompileClasspath();
+    public abstract ConfigurableFileCollection getCompileClasspath();
 
     @Nested
     public abstract ListProperty<FxmlSourceInfo> getFxmlSourceInfo();
@@ -50,7 +51,7 @@ public abstract class ProcessFxmlTask extends DefaultTask {
     @TaskAction
     public void process() {
         UUID compilationId = getCompilationId().get();
-        FileCollection searchPath = getSearchPath().get();
+        FileCollection searchPath = getSearchPath();
         File classesDir = getClassesDir().get().getAsFile();
         File genSrcDir = getGeneratedSourcesDir().get().getAsFile();
         CompilerService service = getCompilerService().get();
@@ -62,7 +63,7 @@ public abstract class ProcessFxmlTask extends DefaultTask {
             compiler.addFiles(getFxmlSourceInfo().get().stream()
                     .collect(Collectors.toMap(
                         x -> x.getSourceDir().get().getAsFile(),
-                        x -> x.getFxmlFiles().get().getFiles().stream().toList())));
+                        x -> x.getFxmlFiles().getFiles().stream().toList())));
 
             compiler.processFiles();
 

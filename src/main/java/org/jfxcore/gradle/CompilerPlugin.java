@@ -53,13 +53,13 @@ public class CompilerPlugin implements Plugin<Project> {
             sourceSet.getTaskName(ProcessFxmlTask.VERB, ProcessFxmlTask.TARGET),
             ProcessFxmlTask.class, task -> {
                 task.getCompilationId().set(compilationId);
-                task.getSearchPath().set(searchPath);
-                task.getCompileClasspath().set(sourceSet.getCompileClasspath());
+                task.getSearchPath().setFrom(searchPath);
+                task.getCompileClasspath().setFrom(sourceSet.getCompileClasspath());
                 task.getFxmlSourceInfo().set(fxmlFiles.entrySet().stream()
                     .map(entry -> {
                         FxmlSourceInfo sourceInfo = project.getObjects().newInstance(FxmlSourceInfo.class);
                         sourceInfo.getSourceDir().set(entry.getKey());
-                        sourceInfo.getFxmlFiles().set(project.files(entry.getValue()));
+                        sourceInfo.getFxmlFiles().setFrom(project.files(entry.getValue()));
                         return sourceInfo;
                     }).toList());
                 task.getClassesDir().set(classesDir);
