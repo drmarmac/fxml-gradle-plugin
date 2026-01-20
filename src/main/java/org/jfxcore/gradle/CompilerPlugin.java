@@ -16,8 +16,6 @@ import org.jfxcore.gradle.compiler.CompilerService;
 import org.jfxcore.gradle.tasks.FxmlSourceInfo;
 import org.jfxcore.gradle.tasks.ProcessFxmlTask;
 import java.io.File;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 public class CompilerPlugin implements Plugin<Project> {
@@ -44,10 +42,9 @@ public class CompilerPlugin implements Plugin<Project> {
         searchPath.from(sourceSet.getOutput());
         searchPath.from(sourceSet.getCompileClasspath());
 
-        FileCollection srcDirs = project.files(sourceSet.getAllSource().getSrcDirs());
+        FileCollection srcDirs = sourceSet.getAllSource().getSourceDirectories();
         Provider<Directory> classesDir = sourceSet.getJava().getClassesDirectory();
         File genSrcDir = PathHelper.getGeneratedSourcesDir(project, sourceSet);
-        Map<File, List<File>> fxmlFiles = PathHelper.getFxmlFilesPerSourceDirectory(srcDirs.getFiles(), genSrcDir);
         UUID compilationId = UUID.randomUUID();
 
         Provider<ProcessFxmlTask> processFxmlTask = project.getTasks().register(
@@ -56,13 +53,15 @@ public class CompilerPlugin implements Plugin<Project> {
                 task.getCompilationId().set(compilationId);
                 task.getSearchPath().setFrom(searchPath);
                 task.getCompileClasspath().setFrom(sourceSet.getCompileClasspath());
-                task.getFxmlSourceInfo().set(fxmlFiles.entrySet().stream()
+                task.getFxmlSourceInfo().set(project.provider(() ->
+                    PathHelper.getFxmlFilesPerSourceDirectory(srcDirs.getFiles(), genSrcDir).entrySet().stream()
                     .map(entry -> {
                         FxmlSourceInfo sourceInfo = project.getObjects().newInstance(FxmlSourceInfo.class);
                         sourceInfo.getSourceDir().set(entry.getKey());
                         sourceInfo.getFxmlFiles().setFrom(project.files(entry.getValue()));
                         return sourceInfo;
-                    }).toList());
+                    }).toList()
+                ));
                 task.getClassesDir().set(classesDir);
                 task.getGeneratedSourcesDir().set(genSrcDir);
             });
@@ -73,7 +72,7 @@ public class CompilerPlugin implements Plugin<Project> {
         project.getTasks().named(sourceSet.getCompileJavaTaskName(), task -> task.doLast(
             project.getObjects().newInstance(
                 RunCompilerAction.class, compilationId, searchPath, srcDirs,
-                classesDir, genSrcDir, project.getLogger())));
+                classesDir.get().getAsFile(), genSrcDir, project.getLogger())));
 
         for (String target : new String[] { "java", "kotlin", "scala", "groovy" }) {
             String compileTaskName = sourceSet.getTaskName("compile", target);
