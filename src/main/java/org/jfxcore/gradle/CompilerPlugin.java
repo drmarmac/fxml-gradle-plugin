@@ -7,6 +7,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.SourceSet;
@@ -44,7 +45,7 @@ public class CompilerPlugin implements Plugin<Project> {
         searchPath.from(sourceSet.getCompileClasspath());
 
         FileCollection srcDirs = project.files(sourceSet.getAllSource().getSrcDirs());
-        File classesDir = sourceSet.getJava().getClassesDirectory().get().getAsFile();
+        Provider<Directory> classesDir = sourceSet.getJava().getClassesDirectory();
         File genSrcDir = PathHelper.getGeneratedSourcesDir(project, sourceSet);
         Map<File, List<File>> fxmlFiles = PathHelper.getFxmlFilesPerSourceDirectory(srcDirs.getFiles(), genSrcDir);
         UUID compilationId = UUID.randomUUID();
